@@ -1,0 +1,13 @@
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/example/AsynchronousMasterWorkerBasedNSGAIIZDT1Example.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/synchronous/SparkSolutionListEvaluator.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/example/AsynchronousMultiThreadedGeneticAlgorithmExample.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/synchronous/SparkEvaluation.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/asynchronous/algorithm/impl/AsynchronousMultiThreadedGeneticAlgorithm.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/asynchronous/algorithm/impl/AsynchronousMultiThreadedNSGAII.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/asynchronous/task/ParallelTask.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/example/AsynchronousMasterWorkerBasedNSGAIIExample.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/asynchronous/multithreaded/Master.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/example/SynchronousNSGAIIWithSparkExample.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/asynchronous/algorithm/AsynchronousParallelAlgorithm.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/asynchronous/multithreaded/Worker.java
+/Users/Kevin/Downloads/jMetal/jmetal-parallel/src/main/java/org/uma/jmetal/parallel/example/SynchronousComponentBasedNSGAIIWithSparkExample.java
