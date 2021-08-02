@@ -9,6 +9,7 @@ public class GridStore<S extends Solution<?>> {
     private List<Integer> objectGrid;
     private double[] centers;
     private CosineDistance<S> cosineDistance;
+    private double[] normalizedObj;
 
     public GridStore() {
     }
@@ -43,5 +44,13 @@ public class GridStore<S extends Solution<?>> {
 
     public void setCosineDistance(CosineDistance<S> cosineDistance) {
         this.cosineDistance = cosineDistance;
+    }
+
+    public double[] getNormalizedObj() {
+        return normalizedObj;
+    }
+
+    public void setNormalizedObj(double[] normalizedObj) {
+        this.normalizedObj = normalizedObj;
     }
 }

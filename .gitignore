@@ -26,5 +26,6 @@ out
 .idea
 dataTemp
 *.iml
+*.lck
 
 

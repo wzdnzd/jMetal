@@ -177,7 +177,7 @@ public class StudyVisualizer {
     Trace scatterTrace = null;
     if (numberOfObjectives == 2) {
       scatterTrace = ScatterTrace.builder(funTable.column(0), funTable.column(1)).build();
-    } else if (numberOfObjectives == 3) {
+    } else if (numberOfObjectives == 3 ||  numberOfObjectives == 5) {
       scatterTrace =
           Scatter3DTrace.builder(
                   funTable.numberColumn(0), funTable.numberColumn(1), funTable.numberColumn(2))
