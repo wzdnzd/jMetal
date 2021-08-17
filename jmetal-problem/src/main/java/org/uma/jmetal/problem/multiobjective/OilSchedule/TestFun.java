@@ -8,35 +8,35 @@ import java.util.stream.Collectors;
 public class TestFun {
     /**
      * 根据塔分配油罐
-     * */
+     */
 
-    public static int getTK(int ds, List<Integer> ET, BackTrace back){
-        List<Integer> ET1=new ArrayList<>();
-        int TK=0;
-        if(ds==1){
-            for(int i=0;i<ET.size();i++){
-                if(ET.get(i)==2|| ET.get(i)==3 || ET.get(i)==10){
+    public static int getTK(int ds, List<Integer> ET, BackTrace back) {
+        List<Integer> ET1 = new ArrayList<>();
+        int TK = 0;
+        if (ds == 1) {
+            for (int i = 0; i < ET.size(); i++) {
+                if (ET.get(i) == 2 || ET.get(i) == 3 || ET.get(i) == 10) {
                     ET1.add(ET.get(i));
                 }
             }
 
-        }else if(ds==2){
-            for(int i=0;i<ET.size();i++){
-                if(ET.get(i)==6|| ET.get(i)==5){
+        } else if (ds == 2) {
+            for (int i = 0; i < ET.size(); i++) {
+                if (ET.get(i) == 6 || ET.get(i) == 5) {
                     ET1.add(ET.get(i));
                 }
             }
 
-        }else{
-            for(int i=0;i<ET.size();i++){
-                if(ET.get(i)==7|| ET.get(i)==9){
+        } else {
+            for (int i = 0; i < ET.size(); i++) {
+                if (ET.get(i) == 7 || ET.get(i) == 9) {
                     ET1.add(ET.get(i));
                 }
             }
 
         }
-        if(!ET1.isEmpty()){
-            TK=ET1.get(getInt(back.getX()[2*back.getStep()], ET1.size()-1));
+        if (!ET1.isEmpty()) {
+            TK = ET1.get(getInt(back.getX()[2 * back.getStep()], ET1.size() - 1));
         }
 
         return TK;
@@ -45,34 +45,34 @@ public class TestFun {
 
     /**
      * 只返回本次蒸馏塔能使用对应的油罐集合
-     * */
+     */
 
-    public static List<Integer> getTKDS(List<Integer> ET, int DS){
-        Map<Integer,List<Integer>> DS_TKs=new HashMap<>();
-        List<Integer> fET=new ArrayList<>();
-        for(int i=0;i<ET.size();i++){
+    public static List<Integer> getTKDS(List<Integer> ET, int DS) {
+        Map<Integer, List<Integer>> DS_TKs = new HashMap<>();
+        List<Integer> fET = new ArrayList<>();
+        for (int i = 0; i < ET.size(); i++) {
             fET.add(ET.get(i));
         }
 
-        List<Integer> ds1=new ArrayList<>();
+        List<Integer> ds1 = new ArrayList<>();
         ds1.add(2);
         ds1.add(3);
         ds1.add(10);
-        DS_TKs.put(1,ds1);
+        DS_TKs.put(1, ds1);
 
-        List<Integer> ds2=new ArrayList<>();
+        List<Integer> ds2 = new ArrayList<>();
         ds2.add(5);
         ds2.add(6);
         ds2.add(10);
-        DS_TKs.put(2,ds2);
+        DS_TKs.put(2, ds2);
 
-        List<Integer> ds3=new ArrayList<>();
+        List<Integer> ds3 = new ArrayList<>();
         ds3.add(7);
         ds3.add(9);
         ds3.add(10);
-        DS_TKs.put(3,ds3);
+        DS_TKs.put(3, ds3);
 
-        List<Integer> TankNeed=DS_TKs.get(DS);
+        List<Integer> TankNeed = DS_TKs.get(DS);
         fET.retainAll(TankNeed);
 
         return fET;
@@ -95,6 +95,7 @@ public class TestFun {
 
     /**
      * 返回一个0-len之间的整数
+     *
      * @param a
      * @param len
      * @return
@@ -144,7 +145,7 @@ public class TestFun {
     public static double gNum(List<List<Double>> a) {
         // ODF格式：蒸馏塔号 | 油罐号 | 开始供油时间 | 结束供油时间 | 原油类型
         // ODT格式：蒸馏塔号 | 油罐号  | 开始供油时间 | 结束供油时间 | 原油类型 | 转运速度
-       return  a.stream().filter(e->e.get(0)<=3).map(e->e.get(1)).distinct().collect(Collectors.toList()).size();
+        return a.stream().filter(e -> e.get(0) <= 3).map(e -> e.get(1)).distinct().collect(Collectors.toList()).size();
     }
 
     public static double gChange(Object[][] TKS, List<List<Double>> a) { //油罐切换次数
@@ -183,17 +184,17 @@ public class TestFun {
         return count;
     }
 
-    public static int dsChange(List<List<Double>> schedule){
-        List<Double> TKS1=schedule.stream().filter(e->e.get(0)<=3).map(e->e.get(1)).collect(Collectors.toList());
+    public static int dsChange(List<List<Double>> schedule) {
+        List<Double> TKS1 = schedule.stream().filter(e -> e.get(0) <= 3).map(e -> e.get(1)).collect(Collectors.toList());
 
         Map<String, Integer> res = new HashMap<>();
 
-        for(int i=0;i<TKS1.size();i++){
-            String key="TK"+(int)Math.floor(TKS1.get(i));
-            if(!res.containsKey(key)){
-                res.put(key,0);
+        for (int i = 0; i < TKS1.size(); i++) {
+            String key = "TK" + (int) Math.floor(TKS1.get(i));
+            if (!res.containsKey(key)) {
+                res.put(key, 0);
             }
-            res.put(key,res.get(key)+1);
+            res.put(key, res.get(key) + 1);
         }
         int count = 0;
         for (String key : res.keySet()) {
@@ -209,25 +210,25 @@ public class TestFun {
      * @param pipeMix
      * @return
      */
-    public static double pipeMix(List<List<Double>> a,int[][] pipeMix) {
-        int[][] m1=new int[8][8];//存储混合次数
-        double pipeCost=0;
+    public static double pipeMix(List<List<Double>> a, int[][] pipeMix) {
+        int[][] m1 = new int[8][8];//存储混合次数
+        double pipeCost = 0;
         List<Double> mix = a.stream()
-                .filter(e->e.get(0)>3 &&e.get(4)>0)//过滤停运和塔的炼油记录
+                .filter(e -> e.get(0) > 3 && e.get(4) > 0)//过滤停运和塔的炼油记录
                 .map(e -> e.get(4))
                 .collect(Collectors.toList());//取出管道混合的一行
 
         for (int i = 0; i < mix.size() - 1; i++) {
-            if(!(Double.toString(mix.get(i)).equals(Double.toString(mix.get(i+1))))){
-                double m,n;
-                m=mix.get(i);
-                n=mix.get(i+1);
-                m1[(int)m-1][(int)n-1]++;
+            if (!(Double.toString(mix.get(i)).equals(Double.toString(mix.get(i + 1))))) {
+                double m, n;
+                m = mix.get(i);
+                n = mix.get(i + 1);
+                m1[(int) m - 1][(int) n - 1]++;
             }
         }
-        for(int i=0;i<pipeMix.length;i++){
-            for(int j=0;j<pipeMix[0].length;j++){
-                pipeCost=pipeCost+pipeMix[i][j]*m1[i][j];
+        for (int i = 0; i < pipeMix.length; i++) {
+            for (int j = 0; j < pipeMix[0].length; j++) {
+                pipeCost = pipeCost + pipeMix[i][j] * m1[i][j];
             }
         }
         return pipeCost;
@@ -244,7 +245,7 @@ public class TestFun {
         //思路：统计所有ODF按照油罐分组即可。  格式：DS(4)  Tank  st endt type
         double[][] tankN = new double[6][6]; //存放各个类型油的混合次数
 
-        Map<Double,List<List<Double>>> tankk=a.stream().filter(e->e.get(0)<4).collect(Collectors.groupingBy(e->e.get(1)));
+        Map<Double, List<List<Double>>> tankk = a.stream().filter(e -> e.get(0) < 4).collect(Collectors.groupingBy(e -> e.get(1)));
 
         // 统计各个油罐的混合次数
         for (Double key : tankk.keySet()) {
@@ -252,8 +253,8 @@ public class TestFun {
             for (int i = 0; i < oilTypes.size() - 1; i++) {
                 double preType = oilTypes.get(i).get(4);
                 double nextType = oilTypes.get(i + 1).get(4);
-                int preType1=(int)preType;
-                int nextType1=(int)nextType;
+                int preType1 = (int) preType;
+                int nextType1 = (int) nextType;
                 if (preType1 != nextType1) {
                     tankN[preType1 - 1][nextType1 - 1]++;
                 }
@@ -272,7 +273,7 @@ public class TestFun {
     /**
      * 计算管道的转运能耗
      *
-     * @param plan           调度计划
+     * @param plan        调度计划
      * @param costPerHour 单位时间能耗
      * @param PIPEFR      管道转运速度
      * @return
@@ -283,7 +284,7 @@ public class TestFun {
 
         // 后期转运的原油类型      ODT格式：蒸馏塔号(1,2,3,4) | 油罐号 | 开始供油时间 | 结束供油时间 | 原油类型  |  转运速度
         List<List<Double>> list = plan.stream()
-                .filter(e -> e.get(0) >3  && e.get(4) > 0)        // 过滤出转运记录&&排除停运
+                .filter(e -> e.get(0) > 3 && e.get(4) > 0)        // 过滤出转运记录&&排除停运
                 .sorted((e1, e2) -> (int) (e1.get(2) - e2.get(2)))  // 按照转运开始时间排序
                 .collect(Collectors.toList());
         for (int i = 0; i < list.size(); i++) {
@@ -296,7 +297,7 @@ public class TestFun {
             result += cost * (end - start);
         }
 
-        return Math.round(result * 100.0) / 100.0;
+        return (int) result;
     }
 
     /**
@@ -308,7 +309,7 @@ public class TestFun {
      */
     public static int getIndex(double[] arr, double value) {
         for (int i = 0; i < arr.length; i++) {
-            if (Math.abs(arr[i]- value)<0.0001) {
+            if (Math.abs(arr[i] - value) < 0.0001) {
                 return i;
             }
         }
@@ -342,12 +343,12 @@ public class TestFun {
 
     /**
      * 提取字符串中的数字
-     * */
-    public static double matchNumber(String a){
-        String regEX="[^0-9]";
-        Pattern p=Pattern.compile(regEX);
-        Matcher m=p.matcher(a);
-        String str=m.replaceAll("").trim();
+     */
+    public static double matchNumber(String a) {
+        String regEX = "[^0-9]";
+        Pattern p = Pattern.compile(regEX);
+        Matcher m = p.matcher(a);
+        String str = m.replaceAll("").trim();
         return Double.parseDouble(str);
     }
 
@@ -494,7 +495,6 @@ public class TestFun {
 
         return objects;
     }
-
 
 
 }

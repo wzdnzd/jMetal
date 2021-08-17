@@ -4,16 +4,16 @@
  * @Project : jMetal
  */
 
-package org.uma.jmetal.algorithm.multiobjective.spea2aga.util;
+package org.uma.jmetal.algorithm.multiobjective.mogwo.util;
 
-import org.uma.jmetal.algorithm.multiobjective.spea2aga.model.GridAlgoBound;
+import org.apache.commons.lang3.tuple.Pair;
 import org.uma.jmetal.solution.Solution;
 import org.uma.jmetal.util.errorchecking.JMetalException;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AGAUtils {
+public class DistanceUtils {
     // 计算两个个体之间的余弦值
     public static <S extends Solution<?>> double cosineDistance(S solution, double[] ref) {
         if (solution == null) {
@@ -85,76 +85,6 @@ public class AGAUtils {
         return Math.sqrt(distance);
     }
 
-    public static <S extends Solution<?>> GridAlgoBound<S> findBounds(List<S> solutionSet, int gridNum, boolean filter) {
-        if (solutionSet == null || solutionSet.isEmpty() || gridNum < 0 || solutionSet.size() <= gridNum) {
-            throw new IllegalArgumentException("非法参数, 网格数必须不大于候选集数");
-        }
-
-        int size = solutionSet.get(0).objectives().length;
-        Map<Integer, List<S>> relativeBest = new HashMap<>();
-        double[] min = new double[size];
-        double[] max = new double[size];
-
-        for (int i = 0; i < size; i++) {
-            min[i] = solutionSet.get(0).objectives()[i];
-            max[i] = solutionSet.get(0).objectives()[i];
-            relativeBest.put(i, new ArrayList<>());
-        }
-
-        for (S s : solutionSet) {
-            double[] objectives = s.objectives();
-            for (int i = 0; i < objectives.length; i++) {
-                if (objectives[i] > max[i]) {
-                    max[i] = objectives[i];
-                } else if (objectives[i] < min[i]) {
-                    min[i] = objectives[i];
-                }
-            }
-        }
-
-        for (S s : solutionSet) {
-            double[] objectives = s.objectives();
-            for (int i = 0; i < objectives.length; i++) {
-                if (objectives[i] == min[i]) {
-                    relativeBest.get(i).add(s);
-                }
-            }
-        }
-
-        List<S> minPoints = new ArrayList<>();
-        if (filter) {
-            for (List<S> list : relativeBest.values()) {
-                if (list.size() == 1) {
-                    minPoints.addAll(list);
-                    continue;
-                }
-
-                list = list.stream().sorted((o1, o2) -> {
-                    if (o1 == o2) {
-                        return 0;
-                    } else if (o1 == null) {
-                        return 1;
-                    } else if (o2 == null) {
-                        return -1;
-                    } else {
-                        double c1 = chebyshevDistance(o1.objectives(), min);
-                        double c2 = chebyshevDistance(o2.objectives(), min);
-
-
-                        return Double.compare(c1, c2);
-                    }
-                }).collect(Collectors.toList());
-
-                minPoints.add(list.get(0));
-            }
-        } else {
-            minPoints = relativeBest.values().stream().flatMap(Collection::stream).distinct().collect(Collectors.toList());
-        }
-
-        minPoints = minPoints.stream().distinct().collect(Collectors.toList());
-        return new GridAlgoBound<>(minPoints, min, max, gridNum);
-    }
-
     public static <S extends Solution<?>> double[] findMin(List<S> archives) {
         if (archives == null || archives.isEmpty()) {
             throw new JMetalException("archive cannot be null");
@@ -179,7 +109,7 @@ public class AGAUtils {
     }
 
 
-    public static double[] normalize(double[] objectives, double[] min, double[] max) {
+    public static double[] minMaxScale(double[] objectives, double[] min, double[] max) {
         if (objectives == null || min == null || max == null
                 || objectives.length != min.length || objectives.length != max.length) {
             throw new JMetalException("维度不一致");
@@ -233,7 +163,7 @@ public class AGAUtils {
         return Math.sqrt(sum / arrays.length);
     }
 
-    public static double[] std(double[] arrays) {
+    public static double[] zScoreNormalize(double[] arrays) {
         if (arrays == null || arrays.length <= 0) {
             return arrays;
         }
@@ -248,7 +178,7 @@ public class AGAUtils {
         return normalized;
     }
 
-    public static double[] std(double[] arrays, double[] means, double[] variances) {
+    public static double[] zScoreNormalize(double[] arrays, double[] means, double[] variances) {
         if (arrays == null || arrays.length <= 0
                 || means == null || means.length != arrays.length
                 || variances == null || variances.length != means.length) {
@@ -257,7 +187,7 @@ public class AGAUtils {
 
         double[] normalized = new double[arrays.length];
         for (int i = 0; i < arrays.length; i++) {
-            normalized[i] = (arrays[i] - means[i]) / variances[i];
+            normalized[i] = variances[i] == 0 ? 0 : (arrays[i] - means[i]) / variances[i];
         }
 
         return normalized;
@@ -279,33 +209,35 @@ public class AGAUtils {
         return result;
     }
 
-    public static <S extends Solution<?>> List<S> findMinBounds(List<S> solutionSet) {
+    public static <S extends Solution<?>> List<Pair<Integer, S>> findMinByObjective(List<S> solutionSet, int index) {
         if (solutionSet == null || solutionSet.isEmpty()) {
             throw new IllegalArgumentException("非法参数, 种群数不能为空");
         }
 
         int size = solutionSet.get(0).objectives().length;
-        Map<Integer, List<S>> map = new HashMap<>();
-        double[] min = new double[size];
-
-        for (int i = 0; i < size; i++) {
-            min[i] = Double.MAX_VALUE;
-            map.put(i, new ArrayList<>());
+        if (index < 0 || index >= size) {
+            throw new JMetalException("非法参数，索引超出优化目标维度");
         }
+
+        double min = Double.MAX_VALUE;
 
         for (S s : solutionSet) {
             double[] objectives = s.objectives();
-            for (int i = 0; i < objectives.length; i++) {
-                if (objectives[i] <= min[i]) {
-                    min[i] = objectives[i];
-                    List<S> list = map.get(i);
-                    list.add(s);
-                    map.put(i, list);
-                }
+            if (objectives[index] < min) {
+                min = objectives[index];
             }
         }
 
-        return map.values().stream().flatMap(Collection::stream).distinct().collect(Collectors.toList());
+        List<Pair<Integer, S>> pairs = new ArrayList<>();
+        for (int i = 0; i < solutionSet.size(); i++) {
+            S s = solutionSet.get(i);
+            if (s.objectives()[index] == min) {
+                Pair<Integer, S> pair = Pair.of(i, s);
+                pairs.add(pair);
+            }
+        }
+
+        return pairs;
     }
 
     public static double manhattanDistance(double[] v1, double[] v2) {
@@ -333,14 +265,4 @@ public class AGAUtils {
 
         return Arrays.stream(diffs).max().orElse(0);
     }
-
-    public static void main(String[] args) {
-        double[] v1 = {9.0, 14.0, 20.0, 35.0, 226.67};
-        double[] v2 = {9.0, 14.0, 20.0, 35.0, 226.67};
-        double[] v3 = {7, 14, 20, 64, 256};
-
-        System.out.println(cosineDistance(v1, v2));
-        System.out.println(cosineDistance(v2, v3));
-    }
-
 }

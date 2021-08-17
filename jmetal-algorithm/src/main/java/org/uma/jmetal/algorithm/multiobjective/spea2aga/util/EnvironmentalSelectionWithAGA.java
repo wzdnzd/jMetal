@@ -72,6 +72,53 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
         }
 
         if (aux.size() < size) {
+//            GridAlgoBound<S> bounds = AGAUtils.findBounds(source, 1, false);
+//            List<S> points = bounds.getBoundPoints();
+//            int remain = size - aux.size();
+//            if (points.size() < remain) {
+//                aux.addAll(points);
+//                Comparator<S> comparator = densityEstimator.getComparator();
+//                source.sort(comparator);
+//
+//                for (S s : source) {
+//                    if (!aux.contains(s)) {
+//                        aux.add(s);
+//                    }
+//
+//                    if (aux.size() == size) {
+//                        break;
+//                    }
+//                }
+//            } else if (remain == points.size()) {
+//                aux.addAll(points);
+//            } else {
+//                int m = source.size();
+//                int n = source.get(0).objectives().length;
+//                double[][] matrix = new double[m][n];
+//                for (int j = 0; j < source.size(); j++) {
+//                    matrix[j] = source.get(j).objectives();
+//                }
+//
+//                matrix = AGAUtils.transpose(matrix);
+//                double[] means = new double[n];
+//                double[] variances = new double[n];
+//                for (int j = 0; j < n; j++) {
+//                    means[j] = AGAUtils.mean(matrix[j]);
+//                    variances[j] = AGAUtils.variance(matrix[j], means[j]);
+//                }
+//
+//                double[] lowers = AGAUtils.std(bounds.getMin(), means, variances);
+//                List<Pair<S, Double>> pairs = points.stream().map(s -> {
+//                            double[] objectives = AGAUtils.std(s.objectives(), means, variances);
+//                            double distance = AGAUtils.distance(lowers, objectives);
+//                            return Pair.of(s, distance);
+//                        }).sorted(Comparator.comparing(Pair::getRight))
+//                        .collect(Collectors.toList());
+//                for (int j = 0; j < remain; j++) {
+//                    aux.add(pairs.get(j).getLeft());
+//                }
+//            }
+
             Ranking<S> ranking = new FastNonDominatedSortRanking<>();
             ranking.compute(source);
             int j = 0;
@@ -83,26 +130,46 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
                     continue;
                 }
 
+                double[] lowers = AGAUtils.std(AGAUtils.findMin(aux), means, variances);
+                List<Pair<S, Double>> pairs = front.stream().map(s -> {
+                            double[] objectives = AGAUtils.std(s.objectives(), means, variances);
+                            double distance = AGAUtils.distance(lowers, objectives);
+                            return Pair.of(s, distance);
+                        }).sorted(Comparator.comparing(Pair::getRight))
+                        .collect(Collectors.toList());
+
+//                GridAlgoBound<S> bounds = AGAUtils.findBounds(aux, 5, densityEstimator);
+//                double[] min = bounds.getMin();
+//                double[] max = bounds.getMax();
+//                double[] lowers = new double[min.length];
+//                List<Pair<S, Double>> pairs = source.stream().map(s -> {
+//                            double[] objs = AGAUtils.normalize(s.objectives(), min, max);
+//                            double distance = AGAUtils.distance(lowers, objs);
+//                            return Pair.of(s, distance);
+//                        }).sorted(Comparator.comparing(Pair::getRight))
+//                        .collect(Collectors.toList());
+//
 //                double[] lowers = AGAUtils.findMin(aux);
+//                List<S> list = front.stream().filter(s -> s.objectives()[0] <= 7.0).collect(Collectors.toList());
 //                List<Pair<S, Double>> pairs = front.stream().map(s -> {
 //                            double distance = AGAUtils.distance(lowers, s.objectives());
 //                            return Pair.of(s, distance);
 //                        }).sorted(Comparator.comparing(Pair::getRight))
 //                        .collect(Collectors.toList());
 
-                double[] lowers = AGAUtils.std(AGAUtils.findMin(aux), means, variances);
-                List<Pair<S, Double>> pairs = source.stream().map(s -> {
-                            double[] objs = AGAUtils.std(s.objectives(), means, variances);
-                            double distance = AGAUtils.distance(lowers, objs);
-                            return Pair.of(s, distance);
-                        }).sorted(Comparator.comparing(Pair::getRight))
-                        .collect(Collectors.toList());
-
                 int remain = size - aux.size();
                 for (i = 0; i < remain; i++) {
                     aux.add(pairs.get(i).getLeft());
                 }
             }
+//
+//            Comparator<S> comparator = densityEstimator.getComparator();
+//            source.sort(comparator);
+
+//            int remain = size - aux.size();
+//            for (i = 0; i < remain; i++) {
+//                aux.add(source.get(i));
+//            }
 
             return aux;
         } else if (aux.size() == size) {
@@ -111,9 +178,10 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
 
         // calculate cosine and remove if |Q| > N
         int gridNum = (int) Math.sqrt(solutionsToSelect);
-        GridAlgoBound<S> bounds = AGAUtils.findBounds(aux, gridNum, densityEstimator);
-        double[] bottoms = bounds.getMin();
+        GridAlgoBound<S> bounds = AGAUtils.findBounds(aux, gridNum, true);
+        double[] min = bounds.getMin();
         double[] max = bounds.getMax();
+        int objNum = max.length;
         double[] widths = new double[max.length];
         for (int j = 0; j < max.length; j++) {
             widths[j] = 1.0 / gridNum;
@@ -122,11 +190,11 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
         List<GridStore<S>> gridStores = new ArrayList<>();
 
         for (S next : aux) {
-            double[] normalizedObj = AGAUtils.normalize(next.objectives(), bottoms, max);
+            double[] normalizedObj = AGAUtils.normalize(next.objectives(), min, max);
             GridStore<S> gs = new GridStore<>();
             List<Integer> arrayList = new ArrayList<>();
-            double[] centers = new double[widths.length];
-            for (int j = 0; j < widths.length; j++) {
+            double[] centers = new double[objNum];
+            for (int j = 0; j < objNum; j++) {
                 int index = (int) Math.ceil(normalizedObj[j] / widths[j]);
                 arrayList.add(index);
 
@@ -180,7 +248,7 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
                 String key = entry.getKey();
                 List<GridStore<S>> stores = entry.getValue();
                 double minDistance = Double.MIN_VALUE;
-                int count = 0;
+                int count = 1;
                 Pair<S, S> p = null;
                 for (int j = 0; j < stores.size() - 1; j++) {
                     GridStore<S> s1 = stores.get(j);
@@ -219,10 +287,10 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
                 Pair<S, S> solutions = null;
                 for (int j = 0; j < list.size() - 1; j++) {
                     S s1 = list.get(j);
-                    double[] nv1 = AGAUtils.normalize(s1.objectives(), bottoms, max);
+                    double[] nv1 = AGAUtils.normalize(s1.objectives(), min, max);
                     for (int k = j + 1; k < list.size(); k++) {
                         S s2 = list.get(k);
-                        double[] nv2 = AGAUtils.normalize(s2.objectives(), bottoms, max);
+                        double[] nv2 = AGAUtils.normalize(s2.objectives(), min, max);
                         double distance = AGAUtils.cosineDistance(nv1, nv2);
                         if (distance > minDistance) {
                             minDistance = distance;
@@ -248,10 +316,14 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
                 S removed = densityEstimator.getValue(solutions.getLeft()) > densityEstimator.getValue(solutions.getRight()) ? solutions.getLeft() : solutions.getRight();
                 Iterator<GridStore<S>> iterator = map.get(pair.getLeft()).iterator();
                 S s = iterator.next().getSolution();
-                while (!solutionEquals(removed, s) && iterator.hasNext()) {
-                    iterator.next();
+                while (!removed.equals(s) && iterator.hasNext()) {
+                    s = iterator.next().getSolution();
                 }
 
+                if (removed.objectives()[0] <= 7.0) {
+                    System.out.println("count: " + pair.getRight().getCount() + "\t Map Size: " + map.size());
+                    System.out.println("SPEA2AGA Remove: " + Arrays.toString(removed.objectives()));
+                }
                 iterator.remove();
             }
 

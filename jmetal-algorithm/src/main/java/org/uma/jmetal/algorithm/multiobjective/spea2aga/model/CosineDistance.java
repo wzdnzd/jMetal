@@ -9,6 +9,8 @@ package org.uma.jmetal.algorithm.multiobjective.spea2aga.model;
 import org.apache.commons.lang3.tuple.Pair;
 import org.uma.jmetal.solution.Solution;
 
+import java.math.BigDecimal;
+
 public class CosineDistance<S extends Solution<?>> {
     private final Pair<S, S> solutions;
     private final double minDistance;

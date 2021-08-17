@@ -10,7 +10,7 @@
 import pandas as pd
 import os
 
-DATA_DIR = "/Users/Kevin/Downloads/jMetal_bak/dataTemp"
+DATA_DIR = "/Users/Kevin/Downloads/jMetal/dataTemp"
 
 
 def find_bound(subpath, file):
@@ -39,10 +39,13 @@ if __name__ == "__main__":
     subpaths = [
         'OilScheduleStudy_Popsize100&Iteration_300',
         'OilScheduleStudy_Popsize100&Iteration_500',
-        # 'OilScheduleStudy_Popsize100&Iteration_1000',
-        # 'OilScheduleStudy_Popsize150&Iteration_300',
+        'OilScheduleStudy_Popsize100&Iteration_1000',
+        'OilScheduleStudy_Popsize150&Iteration_300',
         # 'OilScheduleStudy_Popsize150&Iteration_500',
-        # 'OilScheduleStudy_Popsize150&Iteration_1000'
+        # 'OilScheduleStudy_Popsize150&Iteration_1000',
+        # 'OilScheduleStudy_Popsize200&Iteration_300',
+        # 'OilScheduleStudy_Popsize200&Iteration_500',
+        # 'OilScheduleStudy_Popsize200&Iteration_1000'
     ]
     # for subpath in subpaths:
     #     for file in files:
