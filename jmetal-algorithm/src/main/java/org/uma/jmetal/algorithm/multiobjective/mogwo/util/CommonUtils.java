@@ -3,10 +3,13 @@ package org.uma.jmetal.algorithm.multiobjective.mogwo.util;
 import org.apache.commons.lang3.tuple.Pair;
 import org.uma.jmetal.algorithm.multiobjective.mogwo.WolfSolution;
 import org.uma.jmetal.solution.Solution;
+import org.uma.jmetal.util.SolutionListUtils;
+import org.uma.jmetal.util.SolutionUtils;
 import org.uma.jmetal.util.errorchecking.JMetalException;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,11 +43,23 @@ public class CommonUtils implements Serializable {
     }
 
     public static <S extends Solution<?>> int dominated(S s1, S s2) {
+        if (s1 == null || s2 == null) {
+            throw new JMetalException("非法参数，解不能为空");
+        }
+
+        return dominated(s1.objectives(), s2.objectives());
+    }
+
+    public static int dominated(double[] arr1, double[] arr2) {
+        if (arr1 == null || arr1.length <= 0 || arr2 == null || arr1.length != arr2.length) {
+            throw new JMetalException("维度不匹配，无法判断支配关系");
+        }
+
         int bestIsOne = 0;
         int bestIsTwo = 0;
-        for (int i = 0; i < s1.objectives().length; i++) {
-            double v1 = s1.objectives()[i];
-            double v2 = s2.objectives()[i];
+        for (int i = 0; i < arr1.length; i++) {
+            double v1 = arr1[i];
+            double v2 = arr2[i];
             if (v1 != v2) {
                 if (v1 < v2) {
                     bestIsOne = 1;
@@ -55,6 +70,24 @@ public class CommonUtils implements Serializable {
         }
 
         return Integer.compare(bestIsTwo, bestIsOne);
+    }
+
+    public static boolean betterThan(double[] arr1, double[] arr2) {
+        if (arr1 == null || arr1.length <= 0 || arr2 == null || arr1.length != arr2.length) {
+            throw new JMetalException("维度不匹配，无法判断优劣");
+        }
+
+        double r1 = 0.0;
+        double r2 = 0.0;
+        for (int i = 0; i < arr1.length; i++) {
+            if (arr1[i] < arr2[i]) {
+                r1 += (arr2[i] - arr1[i]) / arr2[i];
+            } else {
+                r2 += (arr1[i] - arr2[i]) / arr1[i];
+            }
+        }
+
+        return r1 > r2;
     }
 
     public static int diff(List<Double> l1, List<Double> l2) {
@@ -224,5 +257,75 @@ public class CommonUtils implements Serializable {
         // [0,n)的整数
         int memberIndex = (int) (Math.random() * n);
         return selectedGrids.get(memberIndex);
+    }
+
+    public static <S extends Solution<?>> double[][] cosineDistanceMatrix(List<S> solutionSet) {
+        double[][] distance = new double[solutionSet.size()][solutionSet.size()];
+        for (int i = 0; i < solutionSet.size(); i++) {
+            distance[i][i] = 0.0;
+            for (int j = i + 1; j < solutionSet.size(); j++) {
+                double v = Math.acos(DistanceUtils.cosineDistance(solutionSet.get(i), solutionSet.get(j)));
+                distance[i][j] = v;
+                distance[j][i] = v;
+            }
+        }
+
+        return distance;
+    }
+
+    public static void computeFitness(List<WolfSolution> solutionList) {
+        double[][] distance = cosineDistanceMatrix(solutionList);
+        double[] strength = new double[solutionList.size()];
+        double[] rawFitness = new double[solutionList.size()];
+        double kDistance;
+
+        // strength(i) = |{j | j <- SolutionSet and i dominate j}|
+        for (int i = 0; i < solutionList.size(); i++) {
+            for (WolfSolution wolfSolution : solutionList) {
+                if (dominated(solutionList.get(i), wolfSolution) == -1) {
+                    strength[i] += 1.0;
+                }
+            }
+        }
+
+        // Calculate the raw fitness
+        // rawFitness(i) = |{sum strenght(j) | j <- SolutionSet and j dominate i}|
+        for (int i = 0; i < solutionList.size(); i++) {
+            for (int j = 0; j < solutionList.size(); j++) {
+                if (dominated(solutionList.get(i), solutionList.get(j)) == 1) {
+                    rawFitness[i] += strength[j];
+                }
+            }
+        }
+
+        // Add the distance to the k-th individual. In the reference paper of SPEA2,
+        // k = sqrt(population.size()), but a value of k = 1 is recommended. See
+        // http://www.tik.ee.ethz.ch/pisa/selectors/spea2/spea2_documentation.txt
+        for (int i = 0; i < distance.length; i++) {
+            Arrays.sort(distance[i]);
+            kDistance = 1.0 / (distance[i][1] + 2.0);
+            solutionList.get(i).attributes().put("fitness", rawFitness[i] + kDistance);
+        }
+    }
+
+    private static double[] generateVec(int length, double num) {
+        if (length < 0) {
+            throw new JMetalException("无效的参数，数组长度必须大于等于0");
+        }
+
+        double[] arr = new double[length];
+        for (int i = 0; i < length; i++) {
+            arr[i] = num;
+        }
+
+        return arr;
+    }
+
+    public static double[] zeros(int length) {
+        return generateVec(length, 0);
+    }
+
+    public static double[] ones(int length) {
+        return generateVec(length, 1);
     }
 }

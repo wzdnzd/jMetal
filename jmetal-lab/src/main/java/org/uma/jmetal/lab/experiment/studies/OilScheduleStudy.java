@@ -1,47 +1,25 @@
 package org.uma.jmetal.lab.experiment.studies;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.uma.jmetal.algorithm.Algorithm;
-import org.uma.jmetal.algorithm.multiobjective.ibea.IBEABuilder;
-import org.uma.jmetal.algorithm.multiobjective.moead.AbstractMOEAD;
-import org.uma.jmetal.algorithm.multiobjective.moead.MOEADBuilder;
-import org.uma.jmetal.algorithm.multiobjective.mogwo.algos.ImprovedGreyWolfAlgorithm;
-import org.uma.jmetal.algorithm.multiobjective.mogwo.algos.ImprovedGreyWolfBuilder;
-import org.uma.jmetal.algorithm.multiobjective.mogwo.leader.ImprovedLeaderSelector;
-import org.uma.jmetal.algorithm.multiobjective.mogwo.position.DefaultPositionInitializer;
-import org.uma.jmetal.algorithm.multiobjective.mogwo.strategy.DefaultDeleteStrategy;
-import org.uma.jmetal.algorithm.multiobjective.mogwo.velocity.DefaultVelocityInitializer;
-import org.uma.jmetal.algorithm.multiobjective.nsgaii.NSGAIIBuilder;
-import org.uma.jmetal.algorithm.multiobjective.nsgaiii.NSGAIIIBuilder;
-import org.uma.jmetal.algorithm.multiobjective.smpso.SMPSOBuilder;
-import org.uma.jmetal.algorithm.multiobjective.spea2.SPEA2;
 import org.uma.jmetal.algorithm.multiobjective.spea2.SPEA2Builder;
-import org.uma.jmetal.algorithm.multiobjective.spea2aga.SPEA2WithAGABuilder;
+import org.uma.jmetal.algorithm.multiobjective.spea2aga.SPEA2AGABuilder;
 import org.uma.jmetal.lab.experiment.Experiment;
 import org.uma.jmetal.lab.experiment.ExperimentBuilder;
 import org.uma.jmetal.lab.experiment.component.impl.*;
 import org.uma.jmetal.lab.experiment.util.ExperimentAlgorithm;
 import org.uma.jmetal.lab.experiment.util.ExperimentProblem;
 import org.uma.jmetal.lab.visualization.StudyVisualizer;
-import org.uma.jmetal.operator.crossover.impl.DifferentialEvolutionCrossover;
 import org.uma.jmetal.operator.crossover.impl.SBXCrossover;
 import org.uma.jmetal.operator.mutation.impl.PolynomialMutation;
-import org.uma.jmetal.operator.selection.impl.BinaryTournamentSelection;
-import org.uma.jmetal.problem.doubleproblem.DoubleProblem;
-import org.uma.jmetal.problem.doubleproblem.impl.AbstractDoubleProblem;
 import org.uma.jmetal.problem.multiobjective.OilSchedule.OilScheduleProblem;
 import org.uma.jmetal.qualityindicator.impl.*;
 import org.uma.jmetal.qualityindicator.impl.hypervolume.impl.PISAHypervolume;
 import org.uma.jmetal.solution.doublesolution.DoubleSolution;
-import org.uma.jmetal.util.archive.impl.CrowdingDistanceArchive;
-import org.uma.jmetal.util.bounds.Bounds;
 import org.uma.jmetal.util.errorchecking.JMetalException;
-import org.uma.jmetal.util.evaluator.impl.SequentialSolutionListEvaluator;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class OilScheduleStudy {
     private static final int INDEPENDENT_RUNS = 10;
@@ -86,7 +64,7 @@ public class OilScheduleStudy {
 
                 new ExecuteAlgorithms<>(experiment).run();
                 new GenerateReferenceParetoSetAndFrontFromDoubleSolutions(experiment).run();
-                new SetCoverageIndicators(experiment, "IMOGWO").run();
+                new SetCoverageIndicators(experiment, "SPEA2AGA").run();
                 new ComputeQualityIndicators<>(experiment).run();
                 new GenerateLatexTablesWithStatistics(experiment).run();
                 new GenerateFriedmanHolmTestTables<>(experiment).run();
@@ -186,32 +164,45 @@ public class OilScheduleStudy {
                 algorithms.add(new ExperimentAlgorithm<>(algorithm, experimentProblem, run));
             }
 
+            // SPEA2AGA
             for (var experimentProblem : problemList) {
-                int numberOfVariables = experimentProblem.getProblem().getNumberOfVariables();
-                double[] lowers = new double[numberOfVariables];
-                double[] uppers = new double[numberOfVariables];
-                if (experimentProblem.getProblem() instanceof AbstractDoubleProblem) {
-                    AbstractDoubleProblem problem = (AbstractDoubleProblem) experimentProblem.getProblem();
-                    List<Bounds<Double>> bounds = problem.getBoundsForVariables();
-                    for (int k = 0; k < bounds.size(); k++) {
-                        lowers[k] = bounds.get(k).getLowerBound();
-                        uppers[k] = bounds.get(k).getUpperBound();
-                    }
-                } else {
-                    throw new JMetalException("grey wolf algorithm must assign lower bound and upper bound");
-                }
-
-                Algorithm<List<DoubleSolution>> algorithm = new ImprovedGreyWolfBuilder<>(MaxEvalationList[j], PopsizeList[i], experimentProblem.getProblem(), "IMOGWO")
-                        .setArchiveSize(PopsizeList[i])
-                        .setGridNum(10)
-                        .setAlpha(0.1)
-                        .setPositionInitializer(new DefaultPositionInitializer(lowers, uppers))
-                        .setVelocityInitializer(new DefaultVelocityInitializer())
-                        .setLeaderSelector(new ImprovedLeaderSelector(3))
-                        .setDeleteStrategy(new DefaultDeleteStrategy(2))
+                Algorithm<List<DoubleSolution>> algorithm = new SPEA2AGABuilder<>(
+                        experimentProblem.getProblem(),
+                        new SBXCrossover(1.0, 20),
+                        new PolynomialMutation(1.0 / experimentProblem.getProblem().getNumberOfVariables(), 20.0))
+                        .setPopulationSize(PopsizeList[i])
+                        .setMaxIterations(MaxEvalationList[j])
+                        .setK(1)
                         .build();
                 algorithms.add(new ExperimentAlgorithm<>(algorithm, experimentProblem, run));
             }
+
+//            for (var experimentProblem : problemList) {
+//                int numberOfVariables = experimentProblem.getProblem().getNumberOfVariables();
+//                double[] lowers = new double[numberOfVariables];
+//                double[] uppers = new double[numberOfVariables];
+//                if (experimentProblem.getProblem() instanceof AbstractDoubleProblem) {
+//                    AbstractDoubleProblem problem = (AbstractDoubleProblem) experimentProblem.getProblem();
+//                    List<Bounds<Double>> bounds = problem.getBoundsForVariables();
+//                    for (int k = 0; k < bounds.size(); k++) {
+//                        lowers[k] = bounds.get(k).getLowerBound();
+//                        uppers[k] = bounds.get(k).getUpperBound();
+//                    }
+//                } else {
+//                    throw new JMetalException("grey wolf algorithm must assign lower bound and upper bound");
+//                }
+//
+//                Algorithm<List<DoubleSolution>> algorithm = new ImprovedGreyWolfBuilder<>(MaxEvalationList[j], PopsizeList[i], experimentProblem.getProblem(), "IMOGWO")
+//                        .setArchiveSize(PopsizeList[i])
+//                        .setGridNum(10)
+//                        .setAlpha(0.1)
+//                        .setPositionInitializer(new DefaultPositionInitializer(lowers, uppers))
+//                        .setVelocityInitializer(new DefaultVelocityInitializer())
+//                        .setLeaderSelector(new ImprovedLeaderSelector(3))
+//                        .setDeleteStrategy(new ImprovedDeleteStrategy())
+//                        .build();
+//                algorithms.add(new ExperimentAlgorithm<>(algorithm, experimentProblem, run));
+//            }
 
             //SMPSO算法
 

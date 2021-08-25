@@ -37,7 +37,7 @@ public class WolfSolution implements Serializable, DoubleSolution {
     // 网格索引
     private int[] gridSubIndex;
 
-    protected Map<Object, Object> attributes;
+    protected Map<Object, Object> attributes = new HashMap<>();
 
     public double getVelocity() {
         return velocity;
@@ -48,13 +48,6 @@ public class WolfSolution implements Serializable, DoubleSolution {
 
     public WolfSolution(WolfSolution solution) {
         super();
-        for (int i = 0; i < solution.variables().size(); i++) {
-            variables().set(i, solution.variables().get(i));
-        }
-
-        for (int i = 0; i < solution.objectives().length; i++) {
-            objectives()[i] = solution.objectives()[i];
-        }
 
         velocity = solution.getVelocity();
         attributes = new HashMap<>(solution.attributes);
@@ -64,7 +57,9 @@ public class WolfSolution implements Serializable, DoubleSolution {
         bestFitness = Arrays.copyOf(solution.getBestFitness(), solution.getBestFitness().length);
         dominated = solution.isDominated();
         index = solution.getIndex();
-        gridSubIndex = Arrays.copyOf(solution.getGridSubIndex(), solution.getGridSubIndex().length);
+        if (solution.getGridSubIndex() != null) {
+            gridSubIndex = Arrays.copyOf(solution.getGridSubIndex(), solution.getGridSubIndex().length);
+        }
     }
 
     public void setVelocity(double velocity) {
@@ -131,7 +126,7 @@ public class WolfSolution implements Serializable, DoubleSolution {
 
     @Override
     public double[] constraints() {
-        return null;
+        return new double[0];
     }
 
     @Override
@@ -164,12 +159,12 @@ public class WolfSolution implements Serializable, DoubleSolution {
 
     @Override
     public Double getLowerBound(int index) {
-        return variables().get(index);
+        return 0.0;
     }
 
     @Override
     public Double getUpperBound(int index) {
-        return variables().get(index);
+        return 1.0;
     }
 }
 

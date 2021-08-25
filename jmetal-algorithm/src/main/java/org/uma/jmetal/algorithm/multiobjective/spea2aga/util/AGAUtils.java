@@ -6,8 +6,10 @@
 
 package org.uma.jmetal.algorithm.multiobjective.spea2aga.util;
 
+import org.uma.jmetal.algorithm.multiobjective.mogwo.util.CommonUtils;
 import org.uma.jmetal.algorithm.multiobjective.spea2aga.model.GridAlgoBound;
 import org.uma.jmetal.solution.Solution;
+import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 import org.uma.jmetal.util.errorchecking.JMetalException;
 
 import java.util.*;
@@ -169,13 +171,36 @@ public class AGAUtils {
         for (S s : archives) {
             double[] objectives = s.objectives();
             for (int i = 0; i < objectives.length; i++) {
-                if (objectives[i] <= lowers[i]) {
+                if (objectives[i] < lowers[i]) {
                     lowers[i] = objectives[i];
                 }
             }
         }
 
         return lowers;
+    }
+
+    public static <S extends Solution<?>> double[] findMax(List<S> archives) {
+        if (archives == null || archives.isEmpty()) {
+            throw new JMetalException("archive cannot be null");
+        }
+
+        int size = archives.get(0).objectives().length;
+        double[] uppers = new double[size];
+        for (int i = 0; i < size; i++) {
+            uppers[i] = Double.MIN_VALUE;
+        }
+
+        for (S s : archives) {
+            double[] objectives = s.objectives();
+            for (int i = 0; i < objectives.length; i++) {
+                if (objectives[i] > uppers[i]) {
+                    uppers[i] = objectives[i];
+                }
+            }
+        }
+
+        return uppers;
     }
 
 
@@ -332,6 +357,73 @@ public class AGAUtils {
         }
 
         return Arrays.stream(diffs).max().orElse(0);
+    }
+
+    public static double rateDistance(double[] v1, double[] v2) {
+        if (v1 == null || v2 == null || v1.length != v2.length) {
+            throw new IllegalArgumentException("非法参数");
+        }
+
+        double totalRate = 0.0;
+        for (int i = 0; i < v1.length; i++) {
+            if (v1[i] == 0) {
+                continue;
+            }
+
+            totalRate += (v2[i] - v1[i]) / v1[i];
+        }
+
+        return totalRate;
+    }
+
+    public static <S extends DoubleSolution> List<Double> calculatePosition(double a, S s1, S s2, int posDim, boolean flag) {
+        List<Double> c = CommonUtils.updateC(posDim);
+        List<Double> list = CommonUtils.updateD(c, s1.variables(), s2.variables());
+
+        if (flag) {
+            List<Double> vec = CommonUtils.updateC(posDim);
+            vec = vec.stream().map(i -> i - a).collect(Collectors.toList());
+            return CommonUtils.nearPrey(s1.variables(), vec, list);
+        }
+
+        double v = 2 * Math.random() * a - a;
+        return CommonUtils.nearPrey(s1.variables(), v, list);
+    }
+
+    public static <S extends Solution<?>> List<S> getNonDominatedParticles(List<S> solutions) {
+        if (solutions == null || solutions.isEmpty()) {
+            return solutions;
+        }
+
+        return solutions.stream().
+                filter(s -> !(Boolean) (s.attributes().getOrDefault("dominated", false)))
+                .collect(Collectors.toList());
+    }
+
+
+    public static <S extends Solution<?>> List<S> determineDomination(List<S> solutions) {
+        if (solutions != null && !solutions.isEmpty()) {
+            for (int i = 0; i < solutions.size(); i++) {
+                S s1 = solutions.get(i);
+                s1.attributes().put("dominated", false);
+                for (int j = 0; j < i - 1; j++) {
+                    S s2 = solutions.get(j);
+                    if ((Boolean) (s2.attributes().getOrDefault("", false))) {
+                        continue;
+                    }
+
+                    int dominated = CommonUtils.dominated(s1, s2);
+                    if (dominated == -1) {
+                        s2.attributes().put("dominated", true);
+                    } else if (dominated == 1) {
+                        s1.attributes().put("dominated", true);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return solutions;
     }
 
     public static void main(String[] args) {
