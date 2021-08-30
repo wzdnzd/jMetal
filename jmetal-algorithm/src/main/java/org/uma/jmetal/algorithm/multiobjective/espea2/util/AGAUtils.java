@@ -4,10 +4,10 @@
  * @Project : jMetal
  */
 
-package org.uma.jmetal.algorithm.multiobjective.spea2aga.util;
+package org.uma.jmetal.algorithm.multiobjective.espea2.util;
 
 import org.uma.jmetal.algorithm.multiobjective.mogwo.util.CommonUtils;
-import org.uma.jmetal.algorithm.multiobjective.spea2aga.model.GridAlgoBound;
+import org.uma.jmetal.algorithm.multiobjective.espea2.model.GridAlgoBound;
 import org.uma.jmetal.solution.Solution;
 import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 import org.uma.jmetal.util.errorchecking.JMetalException;
@@ -424,6 +424,23 @@ public class AGAUtils {
         }
 
         return solutions;
+    }
+
+    public static double[] log(double[] arrays) {
+        if (arrays == null || arrays.length <= 0) {
+            throw new JMetalException("无效的参数，数组不能为空");
+        }
+
+        double[] result = new double[arrays.length];
+        for (int i = 0; i < arrays.length; i++) {
+            if (arrays[i] <= 0) {
+                throw new JMetalException("数组包含小于0的元素，无法求对数");
+            }
+
+            result[i] = Math.log(arrays[i]);
+        }
+
+        return result;
     }
 
     public static void main(String[] args) {

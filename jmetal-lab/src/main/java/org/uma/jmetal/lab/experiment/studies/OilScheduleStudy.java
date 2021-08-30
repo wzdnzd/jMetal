@@ -2,7 +2,7 @@ package org.uma.jmetal.lab.experiment.studies;
 
 import org.uma.jmetal.algorithm.Algorithm;
 import org.uma.jmetal.algorithm.multiobjective.spea2.SPEA2Builder;
-import org.uma.jmetal.algorithm.multiobjective.spea2aga.SPEA2AGABuilder;
+import org.uma.jmetal.algorithm.multiobjective.espea2.ESPEA2Builder;
 import org.uma.jmetal.lab.experiment.Experiment;
 import org.uma.jmetal.lab.experiment.ExperimentBuilder;
 import org.uma.jmetal.lab.experiment.component.impl.*;
@@ -64,7 +64,7 @@ public class OilScheduleStudy {
 
                 new ExecuteAlgorithms<>(experiment).run();
                 new GenerateReferenceParetoSetAndFrontFromDoubleSolutions(experiment).run();
-                new SetCoverageIndicators(experiment, "SPEA2AGA").run();
+                new SetCoverageIndicators(experiment, "SPEA2").run();
                 new ComputeQualityIndicators<>(experiment).run();
                 new GenerateLatexTablesWithStatistics(experiment).run();
                 new GenerateFriedmanHolmTestTables<>(experiment).run();
@@ -164,9 +164,9 @@ public class OilScheduleStudy {
                 algorithms.add(new ExperimentAlgorithm<>(algorithm, experimentProblem, run));
             }
 
-            // SPEA2AGA
+            // ESPEA2
             for (var experimentProblem : problemList) {
-                Algorithm<List<DoubleSolution>> algorithm = new SPEA2AGABuilder<>(
+                Algorithm<List<DoubleSolution>> algorithm = new ESPEA2Builder<>(
                         experimentProblem.getProblem(),
                         new SBXCrossover(1.0, 20),
                         new PolynomialMutation(1.0 / experimentProblem.getProblem().getNumberOfVariables(), 20.0))

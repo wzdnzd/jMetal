@@ -4,7 +4,7 @@
  * @Project : jMetal
  */
 
-package org.uma.jmetal.algorithm.multiobjective.spea2aga.model;
+package org.uma.jmetal.algorithm.multiobjective.espea2.model;
 
 import org.uma.jmetal.solution.Solution;
 

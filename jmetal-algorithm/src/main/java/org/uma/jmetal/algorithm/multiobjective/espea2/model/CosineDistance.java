@@ -4,12 +4,10 @@
  * @Project : jMetal
  */
 
-package org.uma.jmetal.algorithm.multiobjective.spea2aga.model;
+package org.uma.jmetal.algorithm.multiobjective.espea2.model;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.uma.jmetal.solution.Solution;
-
-import java.math.BigDecimal;
 
 public class CosineDistance<S extends Solution<?>> {
     private final Pair<S, S> solutions;

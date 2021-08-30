@@ -4,18 +4,14 @@
  * @Project : jMetal
  */
 
-package org.uma.jmetal.algorithm.multiobjective.spea2aga.leader;
+package org.uma.jmetal.algorithm.multiobjective.espea2.leader;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.uma.jmetal.algorithm.multiobjective.mogwo.WolfSolution;
 import org.uma.jmetal.algorithm.multiobjective.mogwo.util.DistanceUtils;
 import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 import org.uma.jmetal.util.errorchecking.JMetalException;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class BestLeaderSelector<S extends DoubleSolution> extends LeaderSelector<S> {
@@ -23,7 +19,7 @@ public class BestLeaderSelector<S extends DoubleSolution> extends LeaderSelector
     private final int capacity;
 
     // 记录优化目标索引
-    private HashSet<Integer> indies;
+    private List<Integer> indies;
 
     public BestLeaderSelector(int capacity) {
         this.capacity = capacity;
@@ -45,7 +41,7 @@ public class BestLeaderSelector<S extends DoubleSolution> extends LeaderSelector
         return index;
     }
 
-    private HashSet<Integer> selectTopSolutions(List<S> archives, int topN) {
+    private List<Integer> selectTopSolutions(List<S> archives, int topN) {
         if (archives == null || archives.isEmpty() || topN <= 0) {
             throw new JMetalException("非法参数，归档集不能为空且topN必须大于0");
         }
@@ -81,11 +77,16 @@ public class BestLeaderSelector<S extends DoubleSolution> extends LeaderSelector
         pairs = pairs.stream().sorted(Comparator.comparing(Pair::getRight))
                 .collect(Collectors.toList());
 
-        HashSet<Integer> indies = new HashSet<>(topN);
+        List<Integer> indies = new ArrayList<>(topN);
         int count = 0;
         while (count < pairs.size() && indies.size() < topN) {
             indies.add(pairs.get(count).getLeft());
             count += 1;
+        }
+
+        Random ran = new Random();
+        while (indies.size() < capacity) {
+            indies.add(ran.nextInt(archives.size()));
         }
 
         return indies;

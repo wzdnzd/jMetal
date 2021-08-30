@@ -4,13 +4,11 @@
  * @Project : jMetal
  */
 
-package org.uma.jmetal.algorithm.multiobjective.spea2aga.leader;
+package org.uma.jmetal.algorithm.multiobjective.espea2.leader;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.uma.jmetal.algorithm.multiobjective.mogwo.WolfSolution;
 import org.uma.jmetal.algorithm.multiobjective.mogwo.util.DistanceUtils;
 import org.uma.jmetal.solution.doublesolution.DoubleSolution;
-import org.uma.jmetal.util.errorchecking.JMetalException;
 
 import java.util.*;
 import java.util.stream.Collectors;

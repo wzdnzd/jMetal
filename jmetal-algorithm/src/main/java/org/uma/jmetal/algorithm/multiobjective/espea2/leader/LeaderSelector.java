@@ -4,7 +4,7 @@
  * @Project : jMetal
  */
 
-package org.uma.jmetal.algorithm.multiobjective.spea2aga.leader;
+package org.uma.jmetal.algorithm.multiobjective.espea2.leader;
 
 import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 import org.uma.jmetal.util.errorchecking.JMetalException;
