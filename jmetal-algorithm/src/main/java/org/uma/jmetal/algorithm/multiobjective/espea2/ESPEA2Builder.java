@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class ESPEA2Builder<S extends DoubleSolution> implements AlgorithmBuilder<ESPEA2<S>> {
     /**
-     * SPEA2Builder class
+     * SPEA2AGABuilder class
      */
     protected final Problem<S> problem;
     protected int maxIterations;
@@ -27,8 +27,7 @@ public class ESPEA2Builder<S extends DoubleSolution> implements AlgorithmBuilder
     protected MutationOperator<S> mutationOperator;
     protected SelectionOperator<List<S>, S> selectionOperator;
     protected SolutionListEvaluator<S> evaluator;
-    protected int k;
-    protected int wolvesNum;
+    protected int k ;
 
     /**
      * SPEA2Builder constructor
@@ -38,12 +37,11 @@ public class ESPEA2Builder<S extends DoubleSolution> implements AlgorithmBuilder
         this.problem = problem;
         maxIterations = 250;
         populationSize = 100;
-        this.crossoverOperator = crossoverOperator;
-        this.mutationOperator = mutationOperator;
-        selectionOperator = new BinaryTournamentSelection<>();
-        evaluator = new SequentialSolutionListEvaluator<>();
-        k = 1;
-        wolvesNum = 10;
+        this.crossoverOperator = crossoverOperator ;
+        this.mutationOperator = mutationOperator ;
+        selectionOperator = new BinaryTournamentSelection<S>();
+        evaluator = new SequentialSolutionListEvaluator<S>();
+        k = 1 ;
     }
 
     public ESPEA2Builder<S> setMaxIterations(int maxIterations) {
@@ -61,16 +59,6 @@ public class ESPEA2Builder<S extends DoubleSolution> implements AlgorithmBuilder
         }
 
         this.populationSize = populationSize;
-
-        return this;
-    }
-
-    public ESPEA2Builder<S> setWolvesNum(int wolvesNum) {
-        if (wolvesNum < 0) {
-            throw new JMetalException("wolvesNum is negative: " + wolvesNum);
-        }
-
-        this.wolvesNum = wolvesNum;
 
         return this;
     }
@@ -94,14 +82,17 @@ public class ESPEA2Builder<S extends DoubleSolution> implements AlgorithmBuilder
     }
 
     public ESPEA2Builder<S> setK(int k) {
-        this.k = k;
+        this.k = k ;
 
         return this;
     }
 
     public ESPEA2<S> build() {
-        return new ESPEA2<>(problem, maxIterations, populationSize, crossoverOperator,
-                mutationOperator, selectionOperator, evaluator, k, wolvesNum);
+        ESPEA2<S> algorithm = null ;
+        algorithm = new ESPEA2<S>(problem, maxIterations, populationSize, crossoverOperator,
+                mutationOperator, selectionOperator, evaluator, k);
+
+        return algorithm ;
     }
 
     /* Getters */

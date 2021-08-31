@@ -10,7 +10,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.uma.jmetal.algorithm.multiobjective.mogwo.util.DistanceUtils;
 import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class RandomLeaderSelector<S extends DoubleSolution> extends LeaderSelector<S> {
@@ -25,12 +28,13 @@ public class RandomLeaderSelector<S extends DoubleSolution> extends LeaderSelect
 
 
     public RandomLeaderSelector(int capacity) {
+        super();
         this.capacity = capacity;
     }
 
     @Override
-    public int selectOne(List<S> archive) {
-        int objNum = archive.get(0).objectives().length;
+    public int selectOne(List<S> archives) {
+        int objNum = archives.get(0).objectives().length;
         if (indies == null || indies.isEmpty()) {
             // 重新生成索引
             indies = generateIndies(objNum, capacity);
@@ -43,18 +47,18 @@ public class RandomLeaderSelector<S extends DoubleSolution> extends LeaderSelect
         Integer index = indies.iterator().next();
 
         // 找出该优化目标上所有极值点
-        List<Pair<Integer, S>> pairs = DistanceUtils.findMinByObjective(archive, index);
-        int idx;
+        List<Pair<Integer, S>> pairs = DistanceUtils.findMinByObjective(archives, index);
+        int wolfIndex;
         if (pairs.size() == 1) {
-            idx = pairs.get(0).getLeft();
+            wolfIndex = pairs.get(0).getLeft();
         } else {
-            idx = selectOneFromMultiWolves(pairs, solutions);
+            wolfIndex = selectOneFromMultiWolves(pairs, solutions);
         }
 
-        solutions.add(idx);
+        solutions.add(wolfIndex);
         // 该优化目标已经被优化过，移除
         indies.remove(index);
-        return idx;
+        return wolfIndex;
     }
 
     private static HashSet<Integer> generateIndies(int objNum, int capacity) {

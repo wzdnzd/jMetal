@@ -65,7 +65,8 @@ def algorithm_rename(name: str) -> str:
 
 
 def fetch_arguments(excludes: list = []) -> dict:
-    arrays = sorted(os.listdir(DATA_DIR), key=functools.cmp_to_key(cmp))
+    arrays = sorted([x for x in os.listdir(DATA_DIR) if not x.startswith('.')],
+                    key=functools.cmp_to_key(cmp))
     arguments = {}
     for p in arrays:
         key = os.path.join(DATA_DIR, p)

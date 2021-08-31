@@ -1,10 +1,11 @@
-package org.uma.jmetal.algorithm.multiobjective.spea2aga.util;
+package org.uma.jmetal.algorithm.multiobjective.espea2.selection;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.uma.jmetal.algorithm.multiobjective.espea2.util.AlgorithmUtils;
 import org.uma.jmetal.algorithm.multiobjective.spea2.util.EnvironmentalSelection;
-import org.uma.jmetal.algorithm.multiobjective.spea2aga.model.CosineDistance;
-import org.uma.jmetal.algorithm.multiobjective.spea2aga.model.GridAlgoBound;
-import org.uma.jmetal.algorithm.multiobjective.spea2aga.model.GridStore;
+import org.uma.jmetal.algorithm.multiobjective.espea2.model.CosineDistance;
+import org.uma.jmetal.algorithm.multiobjective.espea2.model.GridAlgoBound;
+import org.uma.jmetal.algorithm.multiobjective.espea2.model.GridStore;
 import org.uma.jmetal.solution.Solution;
 import org.uma.jmetal.util.densityestimator.impl.StrenghtRawFitnessDensityEstimator;
 import org.uma.jmetal.util.ranking.Ranking;
@@ -41,12 +42,12 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
             matrix[i] = source2.get(i).objectives();
         }
 
-        matrix = AGAUtils.transpose(matrix);
+        matrix = AlgorithmUtils.transpose(matrix);
         double[] means = new double[n];
         double[] variances = new double[n];
         for (int i = 0; i < n; i++) {
-            means[i] = AGAUtils.mean(matrix[i]);
-            variances[i] = AGAUtils.variance(matrix[i], means[i]);
+            means[i] = AlgorithmUtils.mean(matrix[i]);
+            variances[i] = AlgorithmUtils.variance(matrix[i], means[i]);
         }
 
         int size;
@@ -72,6 +73,7 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
         }
 
         if (aux.size() < size) {
+            //Q<N改进：把极值点加进去后,按照距离依次选择
 //            GridAlgoBound<S> bounds = AGAUtils.findBounds(source, 1, false);
 //            List<S> points = bounds.getBoundPoints();
 //            int remain = size - aux.size();
@@ -119,6 +121,7 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
 //                }
 //            }
 
+            //把剩下的进行非支配排序
             Ranking<S> ranking = new FastNonDominatedSortRanking<>();
             ranking.compute(source);
             int j = 0;
@@ -130,10 +133,10 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
                     continue;
                 }
 
-                double[] lowers = AGAUtils.std(AGAUtils.findMin(aux), means, variances);
+                double[] lowers = AlgorithmUtils.std(AlgorithmUtils.findMin(aux), means, variances);
                 List<Pair<S, Double>> pairs = front.stream().map(s -> {
-                            double[] objectives = AGAUtils.std(s.objectives(), means, variances);
-                            double distance = AGAUtils.distance(lowers, objectives);
+                            double[] objectives = AlgorithmUtils.std(s.objectives(), means, variances);
+                            double distance = AlgorithmUtils.distance(lowers, objectives);
                             return Pair.of(s, distance);
                         }).sorted(Comparator.comparing(Pair::getRight))
                         .collect(Collectors.toList());
@@ -178,7 +181,7 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
 
         // calculate cosine and remove if |Q| > N
         int gridNum = (int) Math.sqrt(solutionsToSelect);
-        GridAlgoBound<S> bounds = AGAUtils.findBounds(aux, gridNum, true);
+        GridAlgoBound<S> bounds = AlgorithmUtils.findBounds(aux, gridNum, true);
         double[] min = bounds.getMin();
         double[] max = bounds.getMax();
         int objNum = max.length;
@@ -190,7 +193,7 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
         List<GridStore<S>> gridStores = new ArrayList<>();
 
         for (S next : aux) {
-            double[] normalizedObj = AGAUtils.normalize(next.objectives(), min, max);
+            double[] normalizedObj = AlgorithmUtils.normalize(next.objectives(), min, max);
             GridStore<S> gs = new GridStore<>();
             List<Integer> arrayList = new ArrayList<>();
             double[] centers = new double[objNum];
@@ -254,7 +257,7 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
                     GridStore<S> s1 = stores.get(j);
                     for (int k = j + 1; k < stores.size(); k++) {
                         GridStore<S> s2 = stores.get(k);
-                        double distance = AGAUtils.cosineDistance(s1.getNormalizedObj(), s2.getNormalizedObj());
+                        double distance = AlgorithmUtils.cosineDistance(s1.getNormalizedObj(), s2.getNormalizedObj());
                         if (distance == minDistance) {
                             count += 1;
                         }
@@ -287,11 +290,11 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
                 Pair<S, S> solutions = null;
                 for (int j = 0; j < list.size() - 1; j++) {
                     S s1 = list.get(j);
-                    double[] nv1 = AGAUtils.normalize(s1.objectives(), min, max);
+                    double[] nv1 = AlgorithmUtils.normalize(s1.objectives(), min, max);
                     for (int k = j + 1; k < list.size(); k++) {
                         S s2 = list.get(k);
-                        double[] nv2 = AGAUtils.normalize(s2.objectives(), min, max);
-                        double distance = AGAUtils.cosineDistance(nv1, nv2);
+                        double[] nv2 = AlgorithmUtils.normalize(s2.objectives(), min, max);
+                        double distance = AlgorithmUtils.cosineDistance(nv1, nv2);
                         if (distance > minDistance) {
                             minDistance = distance;
                             solutions = Pair.of(s1, s2);
@@ -320,10 +323,6 @@ public class EnvironmentalSelectionWithAGA<S extends Solution<?>> extends Enviro
                     s = iterator.next().getSolution();
                 }
 
-                if (removed.objectives()[0] <= 7.0) {
-                    System.out.println("count: " + pair.getRight().getCount() + "\t Map Size: " + map.size());
-                    System.out.println("SPEA2AGA Remove: " + Arrays.toString(removed.objectives()));
-                }
                 iterator.remove();
             }
 

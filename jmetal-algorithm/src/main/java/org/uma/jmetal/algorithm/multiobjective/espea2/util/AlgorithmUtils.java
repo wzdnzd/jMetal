@@ -6,16 +6,18 @@
 
 package org.uma.jmetal.algorithm.multiobjective.espea2.util;
 
-import org.uma.jmetal.algorithm.multiobjective.mogwo.util.CommonUtils;
 import org.uma.jmetal.algorithm.multiobjective.espea2.model.GridAlgoBound;
 import org.uma.jmetal.solution.Solution;
 import org.uma.jmetal.solution.doublesolution.DoubleSolution;
 import org.uma.jmetal.util.errorchecking.JMetalException;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class AGAUtils {
+public class AlgorithmUtils {
     // 计算两个个体之间的余弦值
     public static <S extends Solution<?>> double cosineDistance(S solution, double[] ref) {
         if (solution == null) {
@@ -156,6 +158,7 @@ public class AGAUtils {
         minPoints = minPoints.stream().distinct().collect(Collectors.toList());
         return new GridAlgoBound<>(minPoints, min, max, gridNum);
     }
+
 
     public static <S extends Solution<?>> double[] findMin(List<S> archives) {
         if (archives == null || archives.isEmpty()) {
@@ -304,7 +307,7 @@ public class AGAUtils {
         return result;
     }
 
-    public static <S extends Solution<?>> List<S> findMinBounds(List<S> solutionSet) {
+    public static <S extends Solution<?>> List<S> findMinBounds(List<S> solutionSet, boolean sort) {
         if (solutionSet == null || solutionSet.isEmpty()) {
             throw new IllegalArgumentException("非法参数, 种群数不能为空");
         }
@@ -313,24 +316,51 @@ public class AGAUtils {
         Map<Integer, List<S>> map = new HashMap<>();
         double[] min = new double[size];
 
+
         for (int i = 0; i < size; i++) {
-            min[i] = Double.MAX_VALUE;
-            map.put(i, new ArrayList<>());
+             int t=i;
+            min[t]  = solutionSet.stream().map(s -> s.objectives()[t]).min(Comparator.comparing(Double::doubleValue)).get();
         }
 
-        for (S s : solutionSet) {
-            double[] objectives = s.objectives();
-            for (int i = 0; i < objectives.length; i++) {
-                if (objectives[i] <= min[i]) {
-                    min[i] = objectives[i];
-                    List<S> list = map.get(i);
-                    list.add(s);
-                    map.put(i, list);
+
+        for(int i=0;i<min.length;i++){
+            int t=i;
+            List<S> temp=solutionSet.stream().filter(s->s.objectives()[t]==min[t]).collect(Collectors.toList());
+            map.put(i, temp);
+        }
+
+        if (sort) {
+            for (Map.Entry<Integer, List<S>> entry : map.entrySet()) {
+                List<S> list = entry.getValue();
+                for (S s : list) {
+                    int count = 0;
+                    for (int i = 0; i < min.length; i++) {
+                        if (min[i] == s.objectives()[i]) {
+                            count += 1;
+                        }
+                    }
+
+                    s.attributes().put("extreme", count);
+                    s.attributes().put("dim", entry.getKey());
                 }
+
+                list.sort((o1, o2) -> {
+                    if (o1 == null && o2 == null) {
+                        return 0;
+                    } else if (o1 == null) {
+                        return 1;
+                    } else if (o2 == null) {
+                        return -1;
+                    }
+
+                    double d1 = Math.acos(cosineDistance(o1.objectives(), min));
+                    double d2 = Math.acos(cosineDistance(o2.objectives(), min));
+                    return Double.compare(d1, d2);
+                });
             }
         }
 
-        return map.values().stream().flatMap(Collection::stream).distinct().collect(Collectors.toList());
+        return map.values().stream().flatMap(Collection::stream).filter(distinctByKey(S::objectives)).collect(Collectors.toList());
     }
 
     public static double manhattanDistance(double[] v1, double[] v2) {
@@ -346,6 +376,11 @@ public class AGAUtils {
         return distance;
     }
 
+    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
+    }
+
     public static double chebyshevDistance(double[] v1, double[] v2) {
         if (v1 == null || v2 == null || v1.length != v2.length) {
             throw new IllegalArgumentException("非法参数");
@@ -357,23 +392,6 @@ public class AGAUtils {
         }
 
         return Arrays.stream(diffs).max().orElse(0);
-    }
-
-    public static double rateDistance(double[] v1, double[] v2) {
-        if (v1 == null || v2 == null || v1.length != v2.length) {
-            throw new IllegalArgumentException("非法参数");
-        }
-
-        double totalRate = 0.0;
-        for (int i = 0; i < v1.length; i++) {
-            if (v1[i] == 0) {
-                continue;
-            }
-
-            totalRate += (v2[i] - v1[i]) / v1[i];
-        }
-
-        return totalRate;
     }
 
     public static <S extends DoubleSolution> List<Double> calculatePosition(double a, S s1, S s2, int posDim, boolean flag) {
@@ -425,31 +443,4 @@ public class AGAUtils {
 
         return solutions;
     }
-
-    public static double[] log(double[] arrays) {
-        if (arrays == null || arrays.length <= 0) {
-            throw new JMetalException("无效的参数，数组不能为空");
-        }
-
-        double[] result = new double[arrays.length];
-        for (int i = 0; i < arrays.length; i++) {
-            if (arrays[i] <= 0) {
-                throw new JMetalException("数组包含小于0的元素，无法求对数");
-            }
-
-            result[i] = Math.log(arrays[i]);
-        }
-
-        return result;
-    }
-
-    public static void main(String[] args) {
-        double[] v1 = {9.0, 14.0, 20.0, 35.0, 226.67};
-        double[] v2 = {9.0, 14.0, 20.0, 35.0, 226.67};
-        double[] v3 = {7, 14, 20, 64, 256};
-
-        System.out.println(cosineDistance(v1, v2));
-        System.out.println(cosineDistance(v2, v3));
-    }
-
 }
